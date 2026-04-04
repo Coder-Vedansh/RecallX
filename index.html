@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecallX - Sequence Memory (Vercel Edition)</title>
+    <link rel="stylesheet" href="./style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Auth Container -->
+    <div id="auth-container" class="glass-panel">
+        <div id="login-view">
+            <h1 class="gradient-text">RecallX</h1>
+            <p>Sequence Memory Game</p>
+            <div class="input-group">
+                <input type="text" id="player-name" placeholder="Enter your Name">
+                <input type="text" id="player-phone" placeholder="Enter Phone Number">
+            </div>
+            <button id="btn-send-otp" class="primary-btn">Send OTP</button>
+        </div>
+
+        <div id="otp-view" class="hidden">
+            <h2 class="gradient-text">Verify OTP</h2>
+            <p id="otp-desc"></p>
+            <div class="input-group">
+                <input type="text" id="player-otp" placeholder="4-digit Code">
+            </div>
+            <div class="btn-group">
+                <button id="btn-verify-otp" class="primary-btn">Verify</button>
+                <button id="btn-back-login" class="danger-btn">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container" class="hidden">
+        <header class="game-header">
+            <h2 id="greeting-text">Welcome, Player!</h2>
+            <h1 id="level-text" class="gradient-text">Level 1</h1>
+            <button id="btn-logout" class="danger-btn">Logout</button>
+        </header>
+
+        <div class="game-status">
+            <h3 id="board-status">Get Ready...</h3>
+        </div>
+
+        <div id="grid-board">
+            <!-- Tiles generated dynamically -->
+        </div>
+    </div>
+
+    <!-- Simulated SMS Modal -->
+    <div id="sms-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="sms-header">📱 New Message</div>
+            <p id="sms-text"></p>
+            <button id="btn-close-sms" class="primary-btn">Close</button>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>

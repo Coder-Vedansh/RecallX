@@ -1,0 +1,267 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: #1a1b26;
+    color: #a9b1d6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Auth Structure */
+.glass-panel {
+    background: rgba(36, 40, 59, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+}
+
+.gradient-text {
+    background: linear-gradient(90deg, #7aa2f7, #bb9af7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+}
+
+.glass-panel p {
+    margin-bottom: 25px;
+    color: #9aa5ce;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    background: #16161e;
+    border: 1px solid #414868;
+    border-radius: 8px;
+    color: #c0caf5;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: #7aa2f7;
+    box-shadow: 0 0 10px rgba(122, 162, 247, 0.2);
+}
+
+button {
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    transition: 0.3s transform, 0.3s background;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.primary-btn {
+    width: 100%;
+    background: #7aa2f7;
+    color: #1a1b26;
+}
+
+.primary-btn:hover {
+    background: #8eabf8;
+}
+
+.danger-btn {
+    background: #f7768e;
+    color: #1a1b26;
+}
+
+.danger-btn:hover {
+    background: #f98b9e;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-group .primary-btn { flex: 2; }
+.btn-group .danger-btn { flex: 1; }
+
+
+/* Responsive Game Layout */
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 5%;
+    max-width: 800px;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#greeting-text { color: #9ece6a; font-size: 1.2rem; }
+#level-text { font-size: 2rem; }
+
+.game-status {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+#board-status {
+    font-size: 1.8rem;
+    color: #e0af68;
+    transition: color 0.3s ease;
+}
+
+/* Highly Responsive Flowing Grid */
+#grid-board {
+    display: grid;
+    /* Uses auto-fit coupled with JS explicitly pushing columns to guarantee flawless wrap */
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 12px;
+    justify-content: center;
+    align-content: center;
+    flex: 1;
+    perspective: 1000px;
+    max-height: 70vh; /* Keep it contained nicely */
+}
+
+/* Tiles scaled dynamically */
+.tile {
+    background-color: #414868;
+    border: 2px solid #565f89;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    aspect-ratio: 1 / 1;
+    width: 100%; /* Grow to fit track */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.tile:hover {
+    background-color: #565f89;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.tile:active {
+    transform: translateY(2px) scale(0.98);
+}
+
+/* Animations classes for JS */
+.tile.highlight {
+    background-color: #7aa2f7 !important;
+    border-color: #8db0fc !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(122, 162, 247, 0.8);
+}
+
+.tile.success {
+    background-color: #9ece6a !important;
+    border-color: #b5db85 !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(158, 206, 106, 0.8);
+}
+
+.tile.error {
+    background-color: #f7768e !important;
+    border-color: #fa97a9 !important;
+    transform: scale(1.05);
+    animation: shake 0.4s;
+    box-shadow: 0 0 20px rgba(247, 118, 142, 0.8);
+}
+
+/* SMS Modal Mock */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #1f2335;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 320px;
+    border: 1px solid #7aa2f7;
+    box-shadow: 0 0 20px rgba(122,162,247,0.3);
+}
+
+.sms-header {
+    font-weight: bold;
+    color: #7aa2f7;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+#sms-text {
+    line-height: 1.5;
+    margin-bottom: 20px;
+    white-space: pre-line;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+/* --- Mobile Responsiveness Breakpoints --- */
+@media (max-width: 600px) {
+    .game-header {
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+    #level-text {
+        font-size: 1.5rem;
+    }
+    #grid-board {
+        gap: 8px;
+        /* Let it squeeze much tighter on phones */
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    }
+    .tile {
+        border-radius: 8px;
+    }
+}
