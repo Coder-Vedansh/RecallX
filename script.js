@@ -2,22 +2,24 @@
 const appRoot = document.getElementById('app-root');
 const authContainer = document.getElementById('auth-container');
 const loginView = document.getElementById('login-view');
-const registerView = document.getElementById('register-view');
+const otpView = document.getElementById('otp-view');
 const gameContainer = document.getElementById('game-container');
 const leaderboardContainer = document.getElementById('leaderboard-container');
+const smsModal = document.getElementById('sms-modal');
 
 // --- DOM Elements: Auth ---
-const loginUser = document.getElementById('login-username');
-const loginPass = document.getElementById('login-password');
-const btnLogin = document.getElementById('btn-login');
+const inputName = document.getElementById('player-name');
+const inputPhone = document.getElementById('player-phone');
+const inputOtp = document.getElementById('player-otp');
 
-const regUser = document.getElementById('reg-username');
-const regPass = document.getElementById('reg-password');
-const btnRegister = document.getElementById('btn-register');
+const btnSendOtp = document.getElementById('btn-send-otp');
+const btnVerifyOtp = document.getElementById('btn-verify-otp');
+const btnBackLogin = document.getElementById('btn-back-login');
+const otpDesc = document.getElementById('otp-desc');
 
-const linkRegister = document.getElementById('link-register');
-const linkLogin = document.getElementById('link-login');
-const authSubtitle = document.getElementById('auth-subtitle');
+// --- DOM Elements: SMS ---
+const smsText = document.getElementById('sms-text');
+const btnCloseSms = document.getElementById('btn-close-sms');
 
 // --- DOM Elements: Game ---
 const greetingText = document.getElementById('greeting-text');
@@ -35,7 +37,10 @@ const btnLbPlay = document.getElementById('btn-lb-play');
 const btnLbLogout = document.getElementById('btn-lb-logout');
 
 // --- State Variables ---
-let currentUser = null;
+let currentPhone = null;
+let currentName = null;
+let generatedOtp = null;
+
 const levelsConfig = [8, 14, 20, 26, 36];
 let currentLevel = 0;
 let sequence = [];
@@ -54,11 +59,11 @@ function getLeaderboard() {
     return JSON.parse(localStorage.getItem('leaderboard_db') || '[]');
 }
 
-function saveScore(username, levelsBeaten, failures) {
+function saveScore(phone, name, levelsBeaten, failures) {
     let lb = getLeaderboard();
-    lb.push({ username, levelsBeaten, failures, date: new Date().toISOString() });
+    lb.push({ phone, name, levelsBeaten, failures, date: new Date().toISOString() });
     
-    // Sort logic: Higher levels beaten is better. If tied, fewer failures is better.
+    // Sort logic
     lb.sort((a, b) => {
         if (b.levelsBeaten !== a.levelsBeaten) {
             return b.levelsBeaten - a.levelsBeaten;
@@ -86,81 +91,80 @@ function showView(viewId) {
     }
 }
 
-// Auth Routing
-linkRegister.addEventListener('click', () => {
-    loginView.classList.add('hidden');
-    registerView.classList.remove('hidden');
-    authSubtitle.innerText = "Create your profile.";
-});
-
-linkLogin.addEventListener('click', () => {
-    registerView.classList.add('hidden');
-    loginView.classList.remove('hidden');
-    authSubtitle.innerText = "Welcome back! Please login.";
-});
-
 // --- Auth Mechanics ---
 
-btnRegister.addEventListener('click', () => {
-    const user = regUser.value.trim();
-    const pass = regPass.value.trim();
+btnSendOtp.addEventListener('click', () => {
+    const name = inputName.value.trim();
+    const phone = inputPhone.value.trim();
     
-    if (!user || pass.length < 4) {
-        alert("Username required and password must be at least 4 characters.");
+    if (!name || !phone) {
+        alert("Please provide both Name and Phone number.");
         return;
     }
 
-    let db = getDB();
-    if (db[user]) {
-        alert("Username already exists!");
-        return;
-    }
+    currentName = name;
+    currentPhone = phone;
 
-    db[user] = { password: pass }; // Storing normally (mock backend)
-    localStorage.setItem('users_db', JSON.stringify(db));
-    
-    alert("Profile created! Logging you in.");
-    doLogin(user);
+    // Simulate OTP server side generation
+    generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Show simulated SMS
+    smsText.innerText = `Alert for ${currentName}:\n\nYour RecallX Pro security code is: ${generatedOtp}\n\nDo not share this with anyone.`;
+    smsModal.classList.remove('hidden');
+
+    // Route view
+    loginView.classList.add('hidden');
+    otpView.classList.remove('hidden');
+    otpDesc.innerText = `Enter the 4-digit code sent to ${currentPhone}.`;
 });
 
-btnLogin.addEventListener('click', () => {
-    const user = loginUser.value.trim();
-    const pass = loginPass.value.trim();
-    
-    if (!user || !pass) return;
-
-    let db = getDB();
-    if (!db[user]) {
-        alert("Account not found.");
-        return;
-    }
-    
-    if (db[user].password !== pass) {
-        alert("Invalid Password!");
-        return;
-    }
-    
-    doLogin(user);
+btnCloseSms.addEventListener('click', () => {
+    smsModal.classList.add('hidden');
 });
 
-function doLogin(username) {
-    currentUser = username;
-    greetingText.innerText = `Agent ${currentUser}`;
-    
-    // Clear inputs safely
-    loginUser.value = ''; loginPass.value = '';
-    regUser.value = ''; regPass.value = '';
+btnBackLogin.addEventListener('click', () => {
+    otpView.classList.add('hidden');
+    loginView.classList.remove('hidden');
+    inputOtp.value = '';
+});
+
+btnVerifyOtp.addEventListener('click', () => {
+    const otp = inputOtp.value.trim();
+    if (!otp) return;
+
+    if (otp !== generatedOtp) {
+        alert("Invalid Security Code! Please try again.");
+        return;
+    }
+
+    // Authenticate
+    let db = getDB();
+    if (!db[currentPhone]) {
+        db[currentPhone] = { name: currentName };
+        localStorage.setItem('users_db', JSON.stringify(db));
+    } else {
+        // If they logged in before, fetch their real name registered with this phone
+        currentName = db[currentPhone].name;
+    }
+
+    greetingText.innerText = `Agent ${currentName}`;
+    inputOtp.value = '';
     
     showView('game');
     startFullGameSession();
-}
+});
+
 
 function logout() {
-    // If they were mid-game, record their run to leaderboard!
-    if (currentUser && currentLevel > 0) {
-        saveScore(currentUser, currentLevel, failuresThisRun);
+    if (currentPhone && currentLevel > 0) {
+        saveScore(currentPhone, currentName, currentLevel, failuresThisRun);
     }
-    currentUser = null;
+    currentPhone = null;
+    currentName = null;
+    generatedOtp = null;
+    
+    otpView.classList.add('hidden');
+    loginView.classList.remove('hidden');
     showView('auth');
 }
 
@@ -168,7 +172,7 @@ btnLogout.addEventListener('click', logout);
 btnLbLogout.addEventListener('click', logout);
 
 btnViewLeaderboard.addEventListener('click', () => {
-    saveScore(currentUser, currentLevel, failuresThisRun);
+    saveScore(currentPhone, currentName, currentLevel, failuresThisRun);
     showView('leaderboard');
 });
 btnLbPlay.addEventListener('click', () => {
@@ -197,7 +201,7 @@ function startLevelSequence() {
         progressBar.style.width = "100%";
         setTimeout(() => {
             alert(`🎉 Incredible! You beat all 5 phases with only ${failuresThisRun} mistakes!`);
-            saveScore(currentUser, 5, failuresThisRun);
+            saveScore(currentPhone, currentName, 5, failuresThisRun);
             showView('leaderboard');
         }, 1000);
         return;
@@ -232,7 +236,7 @@ function startLevelSequence() {
     progressBar.style.width = "0%";
     
     boardStatus.innerText = "Memorize Pattern...";
-    boardStatus.style.color = "#fcd34d"; // Yellow warning
+    boardStatus.style.color = "#fcd34d";
     
     setTimeout(playSequence, 1500);
 }
@@ -245,7 +249,7 @@ function playSequence() {
             setTimeout(() => {
                 isFlashing = false;
                 boardStatus.innerText = "Awaiting Input...";
-                boardStatus.style.color = "#60a5fa"; // Blue info
+                boardStatus.style.color = "#60a5fa";
             }, 300);
             return;
         }
@@ -267,7 +271,6 @@ function handleTileClick(index) {
     const tile = tiles[index];
 
     if (index === expectedIndex) {
-        // Correct Action
         tile.classList.add('success');
         setTimeout(() => tile.classList.remove('success'), 200);
         
@@ -277,14 +280,13 @@ function handleTileClick(index) {
         if (currentStep === sequence.length) {
             isFlashing = true;
             boardStatus.innerText = "Access Granted";
-            boardStatus.style.color = "#10b981"; // Green success
+            boardStatus.style.color = "#10b981";
             setTimeout(() => {
                 currentLevel++;
                 startLevelSequence();
             }, 1000);
         }
     } else {
-        // Wrong Action
         isFlashing = true; 
         failuresThisRun++;
         updateStatusText();
@@ -293,12 +295,12 @@ function handleTileClick(index) {
         tiles[expectedIndex].classList.add('highlight'); 
         
         boardStatus.innerText = "Critical Fault Detect";
-        boardStatus.style.color = "#ef4444"; // Red error
+        boardStatus.style.color = "#ef4444";
         progressBar.style.background = "#ef4444";
         
         setTimeout(() => {
             progressBar.style.background = "var(--primary)";
-            startLevelSequence(); // Re-roll sequence for same level
+            startLevelSequence(); 
         }, 1500);
     }
 }
@@ -313,18 +315,21 @@ function renderLeaderboard() {
         return;
     }
 
-    // Capture Top 10 max
     const topRuns = lb.slice(0, 10);
     
     topRuns.forEach((entry, i) => {
         const tr = document.createElement('tr');
         
-        // Highlight first place gold
         let rankColor = i === 0 ? '#fbbf24' : (i === 1 ? '#94a3b8' : (i === 2 ? '#b45309' : 'var(--text-muted)'));
         
+        // Obfuscate phone slightly for privacy on leaderboard 
+        const displayPhone = entry.phone.length >= 4 
+            ? '****' + entry.phone.slice(-4) 
+            : entry.phone;
+            
         tr.innerHTML = `
             <td style="color: ${rankColor}; font-weight:800; font-size:1.1rem;">#${i+1}</td>
-            <td style="font-weight:600;">${entry.username}</td>
+            <td style="font-weight:600;">${entry.name} <br> <span style="font-size:0.75rem; color:var(--text-muted)">${displayPhone}</span></td>
             <td>Level ${entry.levelsBeaten}</td>
             <td><span style="color:var(--error); font-weight:600;">${entry.failures}</span> misses</td>
         `;
