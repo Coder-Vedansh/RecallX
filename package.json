@@ -1,0 +1,8 @@
+{
+  "name": "recallx-sms-api",
+  "version": "1.0.0",
+  "description": "Vercel Serverless dependencies for Twilio SMS",
+  "dependencies": {
+    "twilio": "^4.19.0"
+  }
+}

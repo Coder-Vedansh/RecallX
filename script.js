@@ -93,7 +93,7 @@ function showView(viewId) {
 
 // --- Auth Mechanics ---
 
-btnSendOtp.addEventListener('click', () => {
+btnSendOtp.addEventListener('click', async () => {
     const name = inputName.value.trim();
     const phone = inputPhone.value.trim();
     
@@ -108,9 +108,47 @@ btnSendOtp.addEventListener('click', () => {
     // Simulate OTP server side generation
     generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // Show simulated SMS
-    smsText.innerText = `Alert for ${currentName}:\n\nYour RecallX Pro security code is: ${generatedOtp}\n\nDo not share this with anyone.`;
-    smsModal.classList.remove('hidden');
+    // Update button visually while connecting
+    btnSendOtp.innerText = "Dispatching SMS...";
+    btnSendOtp.disabled = true;
+
+    try {
+        const response = await fetch('/api/send_sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: currentPhone,
+                name: currentName,
+                otp: generatedOtp
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("✅ SMS Message dispatched to your phone via Twilio!");
+        } else {
+            console.error("Twilio Gateway Warning:", data.error);
+            if (data.error === 'MISSING_KEYS') {
+                alert("⚠️ System Warning: Twilio API Keys are not configured in Vercel.\n\nFalling back to simulated SMS Mode.");
+            } else {
+                alert(`⚠️ SMS Delivery Failed (${data.error}).\nFalling back to simulated SMS mode.`);
+            }
+            // Trigger emergency fallback modal since texts won't arrive
+            smsText.innerText = `Alert for ${currentName}:\n\nYour RecallX Pro security code is: ${generatedOtp}\n\nDo not share this with anyone.`;
+            smsModal.classList.remove('hidden');
+        }
+
+    } catch (err) {
+        console.error("Network error hitting /api: ", err);
+        alert("⚠️ Vercel /api endpoint unreachable. Are you testing this locally without Vercel CLI? Falling back to simulated SMS.");
+        smsText.innerText = `Alert for ${currentName}:\n\nYour RecallX Pro security code is: ${generatedOtp}\n\nDo not share this with anyone.`;
+        smsModal.classList.remove('hidden');
+    }
+
+    // Reset button
+    btnSendOtp.innerText = "Send OTP";
+    btnSendOtp.disabled = false;
 
     // Route view
     loginView.classList.add('hidden');
