@@ -49,34 +49,41 @@ let isFlashing = false;
 let tiles = [];
 let failuresThisRun = 0;
 
-// --- Auth Architecture (Mocked Local DB) ---
+// --- Auth Architecture (Mocked Local DB remains local for user auth since DB is leaderboard only) ---
 
 function getDB() {
     return JSON.parse(localStorage.getItem('users_db') || '{}');
 }
 
-function getLeaderboard() {
-    return JSON.parse(localStorage.getItem('leaderboard_db') || '[]');
+// --- GLOBAL DATABASE ARCHITECTURE (Vercel KV) ---
+
+async function fetchGlobalLeaderboard() {
+    try {
+        const res = await fetch('/api/leaderboard');
+        const data = await res.json();
+        return data.leaderboard || [];
+    } catch (e) {
+        console.error("Failed to fetch global leaderboard:", e);
+        return [];
+    }
 }
 
-function saveScore(email, name, levelsBeaten, failures) {
-    let lb = getLeaderboard();
-    lb.push({ email, name, levelsBeaten, failures, date: new Date().toISOString() });
-    
-    // Sort logic
-    lb.sort((a, b) => {
-        if (b.levelsBeaten !== a.levelsBeaten) {
-            return b.levelsBeaten - a.levelsBeaten;
-        }
-        return a.failures - b.failures;
-    });
-
-    localStorage.setItem('leaderboard_db', JSON.stringify(lb));
+async function saveGlobalScore(email, name, levelsBeaten, failures) {
+    try {
+        await fetch('/api/leaderboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, name, levelsBeaten, failures })
+        });
+    } catch (e) {
+        console.error("Failed to save to global leaderboard:", e);
+    }
 }
+
 
 // --- View Routers ---
 
-function showView(viewId) {
+async function showView(viewId) {
     authContainer.classList.add('hidden');
     gameContainer.classList.add('hidden');
     leaderboardContainer.classList.add('hidden');
@@ -87,7 +94,7 @@ function showView(viewId) {
         gameContainer.classList.remove('hidden');
     } else if (viewId === 'leaderboard') {
         leaderboardContainer.classList.remove('hidden');
-        renderLeaderboard();
+        await renderLeaderboard();
     }
 }
 
@@ -105,7 +112,6 @@ btnSendOtp.addEventListener('click', async () => {
     currentName = name;
     currentEmail = email;
 
-    // Simulate OTP generation
     generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
     btnSendOtp.innerText = "Dispatching Email...";
@@ -125,33 +131,29 @@ btnSendOtp.addEventListener('click', async () => {
         const data = await response.json();
 
         if (data.success) {
-            alert(`✅ Nodemailer dispatched an email containing your code directly to ${currentEmail}!`);
+            alert(`✅ Verification sent to ${currentEmail}!`);
         } else {
-            console.error("Email Gateway Error:", data.error);
+            console.error(data.error);
             if (data.error === 'MISSING_KEYS') {
-                alert("⚠️ NodeMailer Warning: Gmail API Keys are not configured in Vercel.\n\nFalling back to simulated Inbox view.");
+                alert("⚠️ System Warning: Gmail API Keys not found in Vercel.\n\nFalling back to simulated view.");
             } else {
-                alert(`⚠️ Email Delivery Failed (${data.error}).\nFalling back to simulated view.`);
+                alert(`⚠️ Delivery Failed.\nFalling back to simulated view.`);
             }
-            // Fallback UI
-            emailText.innerText = `To: ${currentEmail}\nSubject: RecallX Verification Code\n\nYour security code is: ${generatedOtp}\n\nDo not share this.`;
+            emailText.innerText = `To: ${currentEmail}\nSubject: RecallX Code\n\nYour code is: ${generatedOtp}`;
             emailModal.classList.remove('hidden');
         }
 
     } catch (err) {
-        console.error("/api error: ", err);
-        alert("⚠️ Vercel backend unreachable. Falling back to simulated inbox modal.");
-        emailText.innerText = `To: ${currentEmail}\nSubject: RecallX Verification Code\n\nYour security code is: ${generatedOtp}\n\nDo not share this.`;
+        emailText.innerText = `To: ${currentEmail}\nSubject: RecallX Code\n\nYour code is: ${generatedOtp}`;
         emailModal.classList.remove('hidden');
     }
 
     btnSendOtp.innerText = "Send OTP";
     btnSendOtp.disabled = false;
 
-    // Route view
     loginView.classList.add('hidden');
     otpView.classList.remove('hidden');
-    otpDesc.innerText = `Enter the 4-digit code sent to ${currentEmail}.`;
+    otpDesc.innerText = `Enter the code sent to ${currentEmail}.`;
 });
 
 btnCloseEmail.addEventListener('click', () => {
@@ -173,13 +175,11 @@ btnVerifyOtp.addEventListener('click', () => {
         return;
     }
 
-    // Authenticate
     let db = getDB();
     if (!db[currentEmail]) {
         db[currentEmail] = { name: currentName };
         localStorage.setItem('users_db', JSON.stringify(db));
     } else {
-        // Logged in before
         currentName = db[currentEmail].name;
     }
 
@@ -190,9 +190,9 @@ btnVerifyOtp.addEventListener('click', () => {
     startFullGameSession();
 });
 
-function logout() {
+async function logout() {
     if (currentEmail && currentLevel > 0) {
-        saveScore(currentEmail, currentName, currentLevel, failuresThisRun);
+        await saveGlobalScore(currentEmail, currentName, currentLevel, failuresThisRun);
     }
     currentEmail = null;
     currentName = null;
@@ -206,8 +206,10 @@ function logout() {
 btnLogout.addEventListener('click', logout);
 btnLbLogout.addEventListener('click', logout);
 
-btnViewLeaderboard.addEventListener('click', () => {
-    saveScore(currentEmail, currentName, currentLevel, failuresThisRun);
+btnViewLeaderboard.addEventListener('click', async () => {
+    btnViewLeaderboard.innerText = "Syncing...";
+    await saveGlobalScore(currentEmail, currentName, currentLevel, failuresThisRun);
+    btnViewLeaderboard.innerText = "Leaderboard";
     showView('leaderboard');
 });
 btnLbPlay.addEventListener('click', () => {
@@ -234,9 +236,9 @@ function startLevelSequence() {
         boardStatus.innerText = "SYSTEM MASTERED!";
         boardStatus.style.color = "#10b981";
         progressBar.style.width = "100%";
-        setTimeout(() => {
-            alert(`🎉 Incredible! You beat all 5 phases with only ${failuresThisRun} mistakes!`);
-            saveScore(currentEmail, currentName, 5, failuresThisRun);
+        setTimeout(async () => {
+            alert(`🎉 Incredible! You beat all phases with ${failuresThisRun} mistakes!`);
+            await saveGlobalScore(currentEmail, currentName, 5, failuresThisRun);
             showView('leaderboard');
         }, 1000);
         return;
@@ -339,23 +341,24 @@ function handleTileClick(index) {
 }
 
 // --- Leaderboard Logic ---
-function renderLeaderboard() {
-    const lb = getLeaderboard();
+async function renderLeaderboard() {
+    // Show Loading state explicitly
+    leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Fetching Global Ranks...</td></tr>';
+    
+    const lb = await fetchGlobalLeaderboard();
     leaderboardBody.innerHTML = '';
     
     if (lb.length === 0) {
-        leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No data found. Be the first!</td></tr>';
+        leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Global Database empty. Be the first!</td></tr>';
         return;
     }
-
-    const topRuns = lb.slice(0, 10);
     
-    topRuns.forEach((entry, i) => {
+    lb.forEach((entry, i) => {
         const tr = document.createElement('tr');
         
         let rankColor = i === 0 ? '#fbbf24' : (i === 1 ? '#94a3b8' : (i === 2 ? '#b45309' : 'var(--text-muted)'));
         
-        // Obfuscate email for privacy (e.g. johndoe@gmail.com -> joh****@gmail.com)
+        // Obfuscate email
         const parts = entry.email.split('@');
         let displayEmail = entry.email;
         if (parts.length === 2 && parts[0].length > 3) {
