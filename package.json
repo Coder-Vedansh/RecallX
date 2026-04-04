@@ -1,6 +1,7 @@
 {
   "name": "recallx-api",
   "version": "1.0.0",
+  "type": "module",
   "description": "Vercel Serverless dependencies",
   "dependencies": {
     "nodemailer": "^6.9.13"
