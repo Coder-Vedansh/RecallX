@@ -5,11 +5,11 @@ const loginView = document.getElementById('login-view');
 const otpView = document.getElementById('otp-view');
 const gameContainer = document.getElementById('game-container');
 const leaderboardContainer = document.getElementById('leaderboard-container');
-const smsModal = document.getElementById('sms-modal');
+const emailModal = document.getElementById('email-modal');
 
 // --- DOM Elements: Auth ---
 const inputName = document.getElementById('player-name');
-const inputPhone = document.getElementById('player-phone');
+const inputEmail = document.getElementById('player-email');
 const inputOtp = document.getElementById('player-otp');
 
 const btnSendOtp = document.getElementById('btn-send-otp');
@@ -17,9 +17,9 @@ const btnVerifyOtp = document.getElementById('btn-verify-otp');
 const btnBackLogin = document.getElementById('btn-back-login');
 const otpDesc = document.getElementById('otp-desc');
 
-// --- DOM Elements: SMS ---
-const smsText = document.getElementById('sms-text');
-const btnCloseSms = document.getElementById('btn-close-sms');
+// --- DOM Elements: Email Fake ---
+const emailText = document.getElementById('email-text');
+const btnCloseEmail = document.getElementById('btn-close-email');
 
 // --- DOM Elements: Game ---
 const greetingText = document.getElementById('greeting-text');
@@ -37,7 +37,7 @@ const btnLbPlay = document.getElementById('btn-lb-play');
 const btnLbLogout = document.getElementById('btn-lb-logout');
 
 // --- State Variables ---
-let currentPhone = null;
+let currentEmail = null;
 let currentName = null;
 let generatedOtp = null;
 
@@ -59,9 +59,9 @@ function getLeaderboard() {
     return JSON.parse(localStorage.getItem('leaderboard_db') || '[]');
 }
 
-function saveScore(phone, name, levelsBeaten, failures) {
+function saveScore(email, name, levelsBeaten, failures) {
     let lb = getLeaderboard();
-    lb.push({ phone, name, levelsBeaten, failures, date: new Date().toISOString() });
+    lb.push({ email, name, levelsBeaten, failures, date: new Date().toISOString() });
     
     // Sort logic
     lb.sort((a, b) => {
@@ -95,29 +95,28 @@ function showView(viewId) {
 
 btnSendOtp.addEventListener('click', async () => {
     const name = inputName.value.trim();
-    const phone = inputPhone.value.trim();
+    const email = inputEmail.value.trim();
     
-    if (!name || !phone) {
-        alert("Please provide both Name and Phone number.");
+    if (!name || !email) {
+        alert("Please provide both Name and Email address.");
         return;
     }
 
     currentName = name;
-    currentPhone = phone;
+    currentEmail = email;
 
-    // Simulate OTP server side generation
+    // Simulate OTP generation
     generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // Update button visually while connecting
-    btnSendOtp.innerText = "Dispatching SMS...";
+    btnSendOtp.innerText = "Dispatching Email...";
     btnSendOtp.disabled = true;
 
     try {
-        const response = await fetch('/api/send_sms', {
+        const response = await fetch('/api/send_email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                phone: currentPhone,
+                email: currentEmail,
                 name: currentName,
                 otp: generatedOtp
             })
@@ -126,38 +125,37 @@ btnSendOtp.addEventListener('click', async () => {
         const data = await response.json();
 
         if (data.success) {
-            alert("✅ SMS Message dispatched to your phone via Twilio!");
+            alert(`✅ Nodemailer dispatched an email containing your code directly to ${currentEmail}!`);
         } else {
-            console.error("Twilio Gateway Warning:", data.error);
+            console.error("Email Gateway Error:", data.error);
             if (data.error === 'MISSING_KEYS') {
-                alert("⚠️ System Warning: Twilio API Keys are not configured in Vercel.\n\nFalling back to simulated SMS Mode.");
+                alert("⚠️ NodeMailer Warning: Gmail API Keys are not configured in Vercel.\n\nFalling back to simulated Inbox view.");
             } else {
-                alert(`⚠️ SMS Delivery Failed (${data.error}).\nFalling back to simulated SMS mode.`);
+                alert(`⚠️ Email Delivery Failed (${data.error}).\nFalling back to simulated view.`);
             }
-            // Trigger emergency fallback modal since texts won't arrive
-            smsText.innerText = `Alert for ${currentName}:\n\nYour RecallX Pro security code is: ${generatedOtp}\n\nDo not share this with anyone.`;
-            smsModal.classList.remove('hidden');
+            // Fallback UI
+            emailText.innerText = `To: ${currentEmail}\nSubject: RecallX Verification Code\n\nYour security code is: ${generatedOtp}\n\nDo not share this.`;
+            emailModal.classList.remove('hidden');
         }
 
     } catch (err) {
-        console.error("Network error hitting /api: ", err);
-        alert("⚠️ Vercel /api endpoint unreachable. Are you testing this locally without Vercel CLI? Falling back to simulated SMS.");
-        smsText.innerText = `Alert for ${currentName}:\n\nYour RecallX Pro security code is: ${generatedOtp}\n\nDo not share this with anyone.`;
-        smsModal.classList.remove('hidden');
+        console.error("/api error: ", err);
+        alert("⚠️ Vercel backend unreachable. Falling back to simulated inbox modal.");
+        emailText.innerText = `To: ${currentEmail}\nSubject: RecallX Verification Code\n\nYour security code is: ${generatedOtp}\n\nDo not share this.`;
+        emailModal.classList.remove('hidden');
     }
 
-    // Reset button
     btnSendOtp.innerText = "Send OTP";
     btnSendOtp.disabled = false;
 
     // Route view
     loginView.classList.add('hidden');
     otpView.classList.remove('hidden');
-    otpDesc.innerText = `Enter the 4-digit code sent to ${currentPhone}.`;
+    otpDesc.innerText = `Enter the 4-digit code sent to ${currentEmail}.`;
 });
 
-btnCloseSms.addEventListener('click', () => {
-    smsModal.classList.add('hidden');
+btnCloseEmail.addEventListener('click', () => {
+    emailModal.classList.add('hidden');
 });
 
 btnBackLogin.addEventListener('click', () => {
@@ -177,12 +175,12 @@ btnVerifyOtp.addEventListener('click', () => {
 
     // Authenticate
     let db = getDB();
-    if (!db[currentPhone]) {
-        db[currentPhone] = { name: currentName };
+    if (!db[currentEmail]) {
+        db[currentEmail] = { name: currentName };
         localStorage.setItem('users_db', JSON.stringify(db));
     } else {
-        // If they logged in before, fetch their real name registered with this phone
-        currentName = db[currentPhone].name;
+        // Logged in before
+        currentName = db[currentEmail].name;
     }
 
     greetingText.innerText = `Agent ${currentName}`;
@@ -192,12 +190,11 @@ btnVerifyOtp.addEventListener('click', () => {
     startFullGameSession();
 });
 
-
 function logout() {
-    if (currentPhone && currentLevel > 0) {
-        saveScore(currentPhone, currentName, currentLevel, failuresThisRun);
+    if (currentEmail && currentLevel > 0) {
+        saveScore(currentEmail, currentName, currentLevel, failuresThisRun);
     }
-    currentPhone = null;
+    currentEmail = null;
     currentName = null;
     generatedOtp = null;
     
@@ -210,7 +207,7 @@ btnLogout.addEventListener('click', logout);
 btnLbLogout.addEventListener('click', logout);
 
 btnViewLeaderboard.addEventListener('click', () => {
-    saveScore(currentPhone, currentName, currentLevel, failuresThisRun);
+    saveScore(currentEmail, currentName, currentLevel, failuresThisRun);
     showView('leaderboard');
 });
 btnLbPlay.addEventListener('click', () => {
@@ -239,7 +236,7 @@ function startLevelSequence() {
         progressBar.style.width = "100%";
         setTimeout(() => {
             alert(`🎉 Incredible! You beat all 5 phases with only ${failuresThisRun} mistakes!`);
-            saveScore(currentPhone, currentName, 5, failuresThisRun);
+            saveScore(currentEmail, currentName, 5, failuresThisRun);
             showView('leaderboard');
         }, 1000);
         return;
@@ -248,7 +245,6 @@ function startLevelSequence() {
     updateStatusText();
     const numCards = levelsConfig[currentLevel];
     
-    // Grid Generation
     gridBoard.innerHTML = '';
     tiles = [];
     const cols = numCards <= 8 ? 4 : (numCards <= 20 ? 5 : 6);
@@ -262,7 +258,6 @@ function startLevelSequence() {
         tiles.push(tile);
     }
     
-    // Sequence Generation
     const sequenceLength = currentLevel + 4; 
     sequence = [];
     for (let i = 0; i < sequenceLength; i++) {
@@ -360,14 +355,18 @@ function renderLeaderboard() {
         
         let rankColor = i === 0 ? '#fbbf24' : (i === 1 ? '#94a3b8' : (i === 2 ? '#b45309' : 'var(--text-muted)'));
         
-        // Obfuscate phone slightly for privacy on leaderboard 
-        const displayPhone = entry.phone.length >= 4 
-            ? '****' + entry.phone.slice(-4) 
-            : entry.phone;
+        // Obfuscate email for privacy (e.g. johndoe@gmail.com -> joh****@gmail.com)
+        const parts = entry.email.split('@');
+        let displayEmail = entry.email;
+        if (parts.length === 2 && parts[0].length > 3) {
+            displayEmail = parts[0].substring(0, 3) + '***@' + parts[1];
+        } else if (parts.length === 2) {
+            displayEmail = '***@' + parts[1];
+        }
             
         tr.innerHTML = `
             <td style="color: ${rankColor}; font-weight:800; font-size:1.1rem;">#${i+1}</td>
-            <td style="font-weight:600;">${entry.name} <br> <span style="font-size:0.75rem; color:var(--text-muted)">${displayPhone}</span></td>
+            <td style="font-weight:600;">${entry.name} <br> <span style="font-size:0.75rem; color:var(--text-muted)">${displayEmail}</span></td>
             <td>Level ${entry.levelsBeaten}</td>
             <td><span style="color:var(--error); font-weight:600;">${entry.failures}</span> misses</td>
         `;
