@@ -1,3 +1,17 @@
+:root {
+    --bg-main: #0f172a;
+    --panel-bg: rgba(30, 41, 59, 0.7);
+    --primary: #8b5cf6;
+    --primary-hover: #a78bfa;
+    --accent: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.6);
+    --error: #ef4444;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --tile-bg: #334155;
+    --tile-border: #475569;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,262 +20,324 @@
 }
 
 body {
-    background-color: #1a1b26;
-    color: #a9b1d6;
+    background-color: var(--bg-main);
+    color: var(--text-main);
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     overflow-x: hidden;
+    position: relative;
 }
 
-.hidden {
-    display: none !important;
+/* Background Blobs for Visual Aesthetics */
+.blob {
+    position: absolute;
+    filter: blur(80px);
+    z-index: -1;
+    opacity: 0.5;
+    animation: float 20s infinite ease-in-out;
 }
 
-/* Auth Structure */
-.glass-panel {
-    background: rgba(36, 40, 59, 0.7);
-    backdrop-filter: blur(10px);
+.shape-1 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+    top: -100px; left: -100px;
+}
+
+.shape-2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+    bottom: -150px; right: -150px;
+    animation-delay: -10s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(50px, 30px) scale(1.1); }
+}
+
+.hidden { display: none !important; }
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Panels */
+.glass-panel, .game-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 40px;
-    border-radius: 20px;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
     width: 90%;
-    max-width: 400px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    transition: all 0.3s ease;
+    max-width: 440px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.wide-panel {
+    max-width: 600px;
+}
+
+.game-panel {
+    max-width: 800px;
+    width: 95VW;
+    height: 90VH;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Typography elements */
 .gradient-text {
-    background: linear-gradient(90deg, #7aa2f7, #bb9af7);
+    background: linear-gradient(135deg, #a78bfa, #60a5fa);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-size: 2.5rem;
+    font-size: 2.2rem;
+    font-weight: 800;
     margin-bottom: 5px;
+    letter-spacing: -1px;
 }
 
-.glass-panel p {
-    margin-bottom: 25px;
-    color: #9aa5ce;
-}
+.glass-panel h1 { text-align: center; }
+.glass-panel p { text-align: center; color: var(--text-muted); margin-bottom: 30px; }
 
+/* Forms & Inputs */
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 25px;
+    gap: 8px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 input {
     width: 100%;
-    padding: 15px;
-    background: #16161e;
-    border: 1px solid #414868;
-    border-radius: 8px;
-    color: #c0caf5;
+    padding: 14px 16px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--tile-border);
+    border-radius: 12px;
+    color: var(--text-main);
     font-size: 1rem;
     outline: none;
     transition: 0.3s;
 }
 
 input:focus {
-    border-color: #7aa2f7;
-    box-shadow: 0 0 10px rgba(122, 162, 247, 0.2);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
+/* Buttons */
 button {
     font-weight: 600;
     font-size: 1rem;
-    padding: 12px 20px;
-    border-radius: 8px;
+    padding: 14px 20px;
+    border-radius: 12px;
     cursor: pointer;
     border: none;
-    transition: 0.3s transform, 0.3s background;
+    width: 100%;
+    transition: 0.2s transform, 0.2s background, 0.2s box-shadow;
 }
 
-button:active {
-    transform: scale(0.95);
-}
+button:active { transform: scale(0.97); }
 
 .primary-btn {
-    width: 100%;
-    background: #7aa2f7;
-    color: #1a1b26;
+    background: var(--primary);
+    color: white;
 }
 
 .primary-btn:hover {
-    background: #8eabf8;
+    background: var(--primary-hover);
 }
 
-.danger-btn {
-    background: #f7768e;
-    color: #1a1b26;
+.secondary-btn {
+    background: var(--tile-bg);
+    color: var(--text-main);
 }
+.secondary-btn:hover { background: var(--tile-border); }
 
-.danger-btn:hover {
-    background: #f98b9e;
+.danger-btn { background: var(--error); color: white; }
+.danger-btn:hover { background: #f87171; }
+
+.glow-on-hover:hover {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
 }
 
 .btn-group {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    margin-top: 20px;
 }
 
-.btn-group .primary-btn { flex: 2; }
-.btn-group .danger-btn { flex: 1; }
-
-
-/* Responsive Game Layout */
-#game-container {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 2rem 5%;
-    max-width: 800px;
+.auth-footer {
+    margin-top: 20px;
+    font-size: 0.9rem;
 }
+.text-link {
+    color: var(--primary-hover);
+    cursor: pointer;
+    font-weight: 600;
+}
+.text-link:hover { text-decoration: underline; }
 
+/* Game View Specifics */
 .game-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 20px;
 }
 
-#greeting-text { color: #9ece6a; font-size: 1.2rem; }
-#level-text { font-size: 2rem; }
+#greeting-text { font-size: 1.2rem; color: var(--text-main); }
+.score-tracking { font-size: 0.9rem !important; color: var(--error) !important; margin: 0 !important; text-align: left !important;}
+#level-text { font-size: 2.2rem; margin: 0; }
+
+.game-header .btn-group { margin-top: 0; width: auto; }
+.game-header button { width: auto; padding: 10px 16px; }
 
 .game-status {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 #board-status {
-    font-size: 1.8rem;
-    color: #e0af68;
-    transition: color 0.3s ease;
+    font-size: 1.6rem;
+    color: #fcd34d;
+    transition: color 0.3s;
+    margin-bottom: 15px;
 }
 
-/* Highly Responsive Flowing Grid */
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+#progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+/* Grid Board */
 #grid-board {
     display: grid;
-    /* Uses auto-fit coupled with JS explicitly pushing columns to guarantee flawless wrap */
-    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+    gap: 16px;
     justify-content: center;
     align-content: center;
     flex: 1;
     perspective: 1000px;
-    max-height: 70vh; /* Keep it contained nicely */
+    max-height: 100%;
+    padding: 10px;
+    overflow-y: auto;
 }
 
-/* Tiles scaled dynamically */
+/* Tiles */
 .tile {
-    background-color: #414868;
-    border: 2px solid #565f89;
-    border-radius: 12px;
+    background-color: var(--tile-bg);
+    border: 2px solid var(--tile-border);
+    border-radius: 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     aspect-ratio: 1 / 1;
-    width: 100%; /* Grow to fit track */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    width: 100%; 
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.05), 0 4px 6px rgba(0,0,0,0.2);
 }
 
 .tile:hover {
-    background-color: #565f89;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    background-color: #475569;
+    transform: translateY(-4px);
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.1), 0 10px 15px rgba(0,0,0,0.4);
 }
 
-.tile:active {
-    transform: translateY(2px) scale(0.98);
-}
+.tile:active { transform: translateY(2px) scale(0.95); }
 
-/* Animations classes for JS */
+/* Animation States */
 .tile.highlight {
-    background-color: #7aa2f7 !important;
-    border-color: #8db0fc !important;
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(122, 162, 247, 0.8);
+    background-color: var(--primary) !important;
+    border-color: #ddd6fe !important;
+    transform: scale(1.08);
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.8), inset 0 0 15px rgba(255,255,255,0.5);
 }
 
 .tile.success {
-    background-color: #9ece6a !important;
-    border-color: #b5db85 !important;
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(158, 206, 106, 0.8);
+    background-color: var(--accent) !important;
+    border-color: #6ee7b7 !important;
+    transform: scale(1.08);
+    box-shadow: 0 0 30px var(--accent-glow);
 }
 
 .tile.error {
-    background-color: #f7768e !important;
-    border-color: #fa97a9 !important;
+    background-color: var(--error) !important;
+    border-color: #fca5a5 !important;
     transform: scale(1.05);
-    animation: shake 0.4s;
-    box-shadow: 0 0 20px rgba(247, 118, 142, 0.8);
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
 }
 
-/* SMS Modal Mock */
-.modal {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: #1f2335;
-    padding: 30px;
+/* Leaderboard */
+.table-container {
+    background: rgba(15, 23, 42, 0.5);
     border-radius: 12px;
-    width: 90%;
-    max-width: 320px;
-    border: 1px solid #7aa2f7;
-    box-shadow: 0 0 20px rgba(122,162,247,0.3);
+    overflow-x: auto;
+    margin-bottom: 25px;
+    max-height: 350px;
 }
 
-.sms-header {
-    font-weight: bold;
-    color: #7aa2f7;
-    margin-bottom: 15px;
-    font-size: 1.2rem;
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
 }
 
-#sms-text {
-    line-height: 1.5;
-    margin-bottom: 20px;
-    white-space: pre-line;
+th, td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
+
+th {
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    background: rgba(0,0,0,0.2);
+    position: sticky;
+    top: 0;
+}
+
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+td.rank { font-weight: bold; color: var(--primary-hover); }
 
 @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    75% { transform: translateX(-5px); }
-    100% { transform: translateX(0); }
+    10%, 90% { transform: translate3d(-2px, 0, 0); }
+    20%, 80% { transform: translate3d(4px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+    40%, 60% { transform: translate3d(8px, 0, 0); }
 }
 
-/* --- Mobile Responsiveness Breakpoints --- */
-@media (max-width: 600px) {
-    .game-header {
-        flex-direction: column;
-        justify-content: center;
-        text-align: center;
-    }
-    #level-text {
-        font-size: 1.5rem;
-    }
-    #grid-board {
-        gap: 8px;
-        /* Let it squeeze much tighter on phones */
-        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
-    }
-    .tile {
-        border-radius: 8px;
-    }
+@media (max-width: 768px) {
+    .game-header { flex-direction: column; gap: 15px; }
+    .game-header .btn-group { width: 100%; }
+    .game-header button { flex: 1; }
+    #grid-board { grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 10px; }
+    .tile { border-radius: 12px; }
 }

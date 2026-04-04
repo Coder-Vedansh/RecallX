@@ -1,160 +1,227 @@
-// --- DOM Elements ---
+// --- DOM Elements: Layouts ---
+const appRoot = document.getElementById('app-root');
 const authContainer = document.getElementById('auth-container');
 const loginView = document.getElementById('login-view');
-const otpView = document.getElementById('otp-view');
+const registerView = document.getElementById('register-view');
 const gameContainer = document.getElementById('game-container');
-const smsModal = document.getElementById('sms-modal');
+const leaderboardContainer = document.getElementById('leaderboard-container');
 
-// Auth Flow Elements
-const inputName = document.getElementById('player-name');
-const inputPhone = document.getElementById('player-phone');
-const inputOtp = document.getElementById('player-otp');
-const btnSendOtp = document.getElementById('btn-send-otp');
-const btnVerifyOtp = document.getElementById('btn-verify-otp');
-const btnBackLogin = document.getElementById('btn-back-login');
-const otpDesc = document.getElementById('otp-desc');
+// --- DOM Elements: Auth ---
+const loginUser = document.getElementById('login-username');
+const loginPass = document.getElementById('login-password');
+const btnLogin = document.getElementById('btn-login');
 
-// SMS Modal Elements
-const smsText = document.getElementById('sms-text');
-const btnCloseSms = document.getElementById('btn-close-sms');
+const regUser = document.getElementById('reg-username');
+const regPass = document.getElementById('reg-password');
+const btnRegister = document.getElementById('btn-register');
 
-// Game Flow Elements
+const linkRegister = document.getElementById('link-register');
+const linkLogin = document.getElementById('link-login');
+const authSubtitle = document.getElementById('auth-subtitle');
+
+// --- DOM Elements: Game ---
 const greetingText = document.getElementById('greeting-text');
 const levelText = document.getElementById('level-text');
 const boardStatus = document.getElementById('board-status');
 const gridBoard = document.getElementById('grid-board');
+const failureCountUI = document.getElementById('failure-count');
+const progressBar = document.getElementById('progress-bar');
 const btnLogout = document.getElementById('btn-logout');
+const btnViewLeaderboard = document.getElementById('btn-view-leaderboard');
+
+// --- DOM Elements: Leaderboard ---
+const leaderboardBody = document.getElementById('leaderboard-body');
+const btnLbPlay = document.getElementById('btn-lb-play');
+const btnLbLogout = document.getElementById('btn-lb-logout');
 
 // --- State Variables ---
-let currentName = '';
-let currentPhone = '';
-let generatedOtp = '';
-
-// Game State
+let currentUser = null;
 const levelsConfig = [8, 14, 20, 26, 36];
 let currentLevel = 0;
 let sequence = [];
 let currentStep = 0;
 let isFlashing = false;
 let tiles = [];
+let failuresThisRun = 0;
 
-// --- LocalStorage Database Mock ---
-function getOrCreateUser(phone, name) {
-    let db = JSON.parse(localStorage.getItem('players_db') || '{}');
-    if (db[phone]) {
-        return { name: db[phone].name, isNew: false };
-    } else {
-        db[phone] = { name: name, highest_level: 1 };
-        localStorage.setItem('players_db', JSON.stringify(db));
-        return { name: name, isNew: true };
+// --- Auth Architecture (Mocked Local DB) ---
+
+function getDB() {
+    return JSON.parse(localStorage.getItem('users_db') || '{}');
+}
+
+function getLeaderboard() {
+    return JSON.parse(localStorage.getItem('leaderboard_db') || '[]');
+}
+
+function saveScore(username, levelsBeaten, failures) {
+    let lb = getLeaderboard();
+    lb.push({ username, levelsBeaten, failures, date: new Date().toISOString() });
+    
+    // Sort logic: Higher levels beaten is better. If tied, fewer failures is better.
+    lb.sort((a, b) => {
+        if (b.levelsBeaten !== a.levelsBeaten) {
+            return b.levelsBeaten - a.levelsBeaten;
+        }
+        return a.failures - b.failures;
+    });
+
+    localStorage.setItem('leaderboard_db', JSON.stringify(lb));
+}
+
+// --- View Routers ---
+
+function showView(viewId) {
+    authContainer.classList.add('hidden');
+    gameContainer.classList.add('hidden');
+    leaderboardContainer.classList.add('hidden');
+    
+    if(viewId === 'auth') {
+        authContainer.classList.remove('hidden');
+    } else if (viewId === 'game') {
+        gameContainer.classList.remove('hidden');
+    } else if (viewId === 'leaderboard') {
+        leaderboardContainer.classList.remove('hidden');
+        renderLeaderboard();
     }
 }
 
-// --- Auth Flow ---
+// Auth Routing
+linkRegister.addEventListener('click', () => {
+    loginView.classList.add('hidden');
+    registerView.classList.remove('hidden');
+    authSubtitle.innerText = "Create your profile.";
+});
 
-btnSendOtp.addEventListener('click', () => {
-    currentName = inputName.value.trim();
-    currentPhone = inputPhone.value.trim();
+linkLogin.addEventListener('click', () => {
+    registerView.classList.add('hidden');
+    loginView.classList.remove('hidden');
+    authSubtitle.innerText = "Welcome back! Please login.";
+});
 
-    if (!currentName || !currentPhone) {
-        alert("Please enter Name and Phone number.");
+// --- Auth Mechanics ---
+
+btnRegister.addEventListener('click', () => {
+    const user = regUser.value.trim();
+    const pass = regPass.value.trim();
+    
+    if (!user || pass.length < 4) {
+        alert("Username required and password must be at least 4 characters.");
         return;
     }
 
-    // Generate random 4 digit code locally
-    generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-
-    // Show custom simulated SMS
-    smsText.innerText = `Hey ${currentName},\n\nYour RecallX verification code is: ${generatedOtp}\n\n(Do not share this)`;
-    smsModal.classList.remove('hidden');
-    
-    // Switch to OTP view
-    loginView.classList.add('hidden');
-    otpView.classList.remove('hidden');
-    otpDesc.innerText = `Enter the OTP sent to ${currentPhone}.`;
-});
-
-btnCloseSms.addEventListener('click', () => {
-    smsModal.classList.add('hidden');
-});
-
-btnBackLogin.addEventListener('click', () => {
-    otpView.classList.add('hidden');
-    loginView.classList.remove('hidden');
-    inputOtp.value = '';
-});
-
-btnVerifyOtp.addEventListener('click', () => {
-    const otp = inputOtp.value.trim();
-    if (!otp) return;
-
-    if (otp === generatedOtp) {
-        // Authenticate locally!
-        const userState = getOrCreateUser(currentPhone, currentName);
-
-        // Authorized! Start game
-        authContainer.classList.add('hidden');
-        gameContainer.classList.remove('hidden');
-        
-        if (!userState.isNew && userState.name !== currentName) {
-            alert(`Welcome back, ${userState.name}!`);
-        }
-        
-        greetingText.innerText = `Welcome, ${userState.name}!`;
-        startGame();
-    } else {
-        alert("Invalid OTP! Try again.");
+    let db = getDB();
+    if (db[user]) {
+        alert("Username already exists!");
+        return;
     }
+
+    db[user] = { password: pass }; // Storing normally (mock backend)
+    localStorage.setItem('users_db', JSON.stringify(db));
+    
+    alert("Profile created! Logging you in.");
+    doLogin(user);
 });
 
-btnLogout.addEventListener('click', () => {
-    gameContainer.classList.add('hidden');
-    authContainer.classList.remove('hidden');
+btnLogin.addEventListener('click', () => {
+    const user = loginUser.value.trim();
+    const pass = loginPass.value.trim();
     
-    // Reset Auth state
-    otpView.classList.add('hidden');
-    loginView.classList.remove('hidden');
-    inputName.value = '';
-    inputPhone.value = '';
-    inputOtp.value = '';
+    if (!user || !pass) return;
+
+    let db = getDB();
+    if (!db[user]) {
+        alert("Account not found.");
+        return;
+    }
+    
+    if (db[user].password !== pass) {
+        alert("Invalid Password!");
+        return;
+    }
+    
+    doLogin(user);
+});
+
+function doLogin(username) {
+    currentUser = username;
+    greetingText.innerText = `Agent ${currentUser}`;
+    
+    // Clear inputs safely
+    loginUser.value = ''; loginPass.value = '';
+    regUser.value = ''; regPass.value = '';
+    
+    showView('game');
+    startFullGameSession();
+}
+
+function logout() {
+    // If they were mid-game, record their run to leaderboard!
+    if (currentUser && currentLevel > 0) {
+        saveScore(currentUser, currentLevel, failuresThisRun);
+    }
+    currentUser = null;
+    showView('auth');
+}
+
+btnLogout.addEventListener('click', logout);
+btnLbLogout.addEventListener('click', logout);
+
+btnViewLeaderboard.addEventListener('click', () => {
+    saveScore(currentUser, currentLevel, failuresThisRun);
+    showView('leaderboard');
+});
+btnLbPlay.addEventListener('click', () => {
+    showView('game');
+    startFullGameSession();
 });
 
 // --- Game Sequence Logic ---
 
-function startGame() {
+function startFullGameSession() {
     currentLevel = 0;
-    startLevel();
+    failuresThisRun = 0;
+    updateStatusText();
+    startLevelSequence();
 }
 
-function startLevel() {
+function updateStatusText() {
+    failureCountUI.innerText = failuresThisRun;
+    levelText.innerText = `LEVEL ${currentLevel + 1}`;
+}
+
+function startLevelSequence() {
     if (currentLevel >= levelsConfig.length) {
-        alert("🎉 Incredible! You've mastered all 5 levels!\n\nYou have perfect sequence memory.");
-        startGame(); // Reset
+        boardStatus.innerText = "SYSTEM MASTERED!";
+        boardStatus.style.color = "#10b981";
+        progressBar.style.width = "100%";
+        setTimeout(() => {
+            alert(`🎉 Incredible! You beat all 5 phases with only ${failuresThisRun} mistakes!`);
+            saveScore(currentUser, 5, failuresThisRun);
+            showView('leaderboard');
+        }, 1000);
         return;
     }
 
+    updateStatusText();
     const numCards = levelsConfig[currentLevel];
-    levelText.innerText = `Level ${currentLevel + 1}`;
     
-    // Generate Grid layout
+    // Grid Generation
     gridBoard.innerHTML = '';
     tiles = [];
-    
-    // Use JS to assign dynamic grid columns tightly based on level to optimize view space
     const cols = numCards <= 8 ? 4 : (numCards <= 20 ? 5 : 6);
     gridBoard.style.gridTemplateColumns = `repeat(${cols}, minmax(40px, 1fr))`;
     
     for (let i = 0; i < numCards; i++) {
         const tile = document.createElement('div');
         tile.classList.add('tile');
-        tile.dataset.index = i;
         tile.addEventListener('click', () => handleTileClick(i));
         gridBoard.appendChild(tile);
         tiles.push(tile);
     }
     
-    // Setup Sequence
-    const sequenceLength = currentLevel + 4; // L1: 4, L5: 8
+    // Sequence Generation
+    const sequenceLength = currentLevel + 4; 
     sequence = [];
     for (let i = 0; i < sequenceLength; i++) {
         sequence.push(Math.floor(Math.random() * numCards));
@@ -162,24 +229,24 @@ function startLevel() {
     
     currentStep = 0;
     isFlashing = true;
-    boardStatus.innerText = "Get Ready...";
-    boardStatus.style.color = "#ebcb8b";
+    progressBar.style.width = "0%";
+    
+    boardStatus.innerText = "Memorize Pattern...";
+    boardStatus.style.color = "#fcd34d"; // Yellow warning
     
     setTimeout(playSequence, 1500);
 }
 
 function playSequence() {
-    boardStatus.innerText = "Watch Closely!";
-    
     let index = 0;
     const interval = setInterval(() => {
         if (index >= sequence.length) {
             clearInterval(interval);
             setTimeout(() => {
                 isFlashing = false;
-                boardStatus.innerText = "Your Turn!";
-                boardStatus.style.color = "#9ece6a";
-            }, 400);
+                boardStatus.innerText = "Awaiting Input...";
+                boardStatus.style.color = "#60a5fa"; // Blue info
+            }, 300);
             return;
         }
 
@@ -187,10 +254,10 @@ function playSequence() {
         const tile = tiles[targetIndex];
         
         tile.classList.add('highlight');
-        setTimeout(() => tile.classList.remove('highlight'), 400); 
+        setTimeout(() => tile.classList.remove('highlight'), 350); 
         
         index++;
-    }, 800); 
+    }, 850); 
 }
 
 function handleTileClick(index) {
@@ -200,36 +267,67 @@ function handleTileClick(index) {
     const tile = tiles[index];
 
     if (index === expectedIndex) {
-        // Correct click
+        // Correct Action
         tile.classList.add('success');
         setTimeout(() => tile.classList.remove('success'), 200);
         
         currentStep++;
+        progressBar.style.width = `${(currentStep / sequence.length) * 100}%`;
         
         if (currentStep === sequence.length) {
             isFlashing = true;
-            boardStatus.innerText = "Perfect!";
-            boardStatus.style.color = "#7aa2f7";
+            boardStatus.innerText = "Access Granted";
+            boardStatus.style.color = "#10b981"; // Green success
             setTimeout(() => {
-                alert(`Flawless memory! Transitioning to Level ${currentLevel + 2}.`);
                 currentLevel++;
-                startLevel();
-            }, 800);
+                startLevelSequence();
+            }, 1000);
         }
     } else {
-        // Wrong Logic
+        // Wrong Action
         isFlashing = true; 
+        failuresThisRun++;
+        updateStatusText();
+        
         tile.classList.add('error');
+        tiles[expectedIndex].classList.add('highlight'); 
         
-        const expectedTile = tiles[expectedIndex];
-        expectedTile.classList.add('highlight'); 
-        
-        boardStatus.innerText = "Incorrect!";
-        boardStatus.style.color = "#f7768e";
+        boardStatus.innerText = "Critical Fault Detect";
+        boardStatus.style.color = "#ef4444"; // Red error
+        progressBar.style.background = "#ef4444";
         
         setTimeout(() => {
-            alert("Oops! That was the wrong tile. Let's grab a new sequence.");
-            startLevel(); 
+            progressBar.style.background = "var(--primary)";
+            startLevelSequence(); // Re-roll sequence for same level
         }, 1500);
     }
+}
+
+// --- Leaderboard Logic ---
+function renderLeaderboard() {
+    const lb = getLeaderboard();
+    leaderboardBody.innerHTML = '';
+    
+    if (lb.length === 0) {
+        leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No data found. Be the first!</td></tr>';
+        return;
+    }
+
+    // Capture Top 10 max
+    const topRuns = lb.slice(0, 10);
+    
+    topRuns.forEach((entry, i) => {
+        const tr = document.createElement('tr');
+        
+        // Highlight first place gold
+        let rankColor = i === 0 ? '#fbbf24' : (i === 1 ? '#94a3b8' : (i === 2 ? '#b45309' : 'var(--text-muted)'));
+        
+        tr.innerHTML = `
+            <td style="color: ${rankColor}; font-weight:800; font-size:1.1rem;">#${i+1}</td>
+            <td style="font-weight:600;">${entry.username}</td>
+            <td>Level ${entry.levelsBeaten}</td>
+            <td><span style="color:var(--error); font-weight:600;">${entry.failures}</span> misses</td>
+        `;
+        leaderboardBody.appendChild(tr);
+    });
 }
