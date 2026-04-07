@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecallX Pro - DFD Flowcharts</title>
+    <!-- Importing Mermaid.js to automatically render the DFD Flowcharts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            color: #1e293b; 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+            background: #fff;
+        }
+        h1 { color: #0f172a; border-bottom: 3px solid #3b82f6; padding-bottom: 15px; font-size: 2.2rem; margin-bottom: 40px;}
+        h2 { color: #1e293b; margin-top: 50px; padding-bottom: 8px; border-bottom: 1px solid #cbd5e1; }
+        .diagram-container { 
+            background: #f8fafc; 
+            padding: 25px; 
+            border-radius: 12px; 
+            margin: 25px 0 50px 0; 
+            border: 1px solid #e2e8f0; 
+            text-align: center;
+        }
+        
+        @media print {
+            body { padding: 0; max-width: 100%; }
+            .diagram-container { page-break-inside: avoid; border: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>RecallX Pro: Data Flow Diagrams</h1>
+
+    <h2>Level 0 Context Diagram</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+            %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#eff6ff', 'edgeLabelBackground':'#ffffff'}}}%%
+            graph TD
+                Player((Player)) -- "Submits Name & Email" --> System[RecallX Pro Core System]
+                System -- "Dispatches Secure OTP" --> Inbox[Email Inbox]
+                Player -- "Inputs Authenticated OTP" --> System
+                Player -- "Plays Level Sequences" --> System
+                System -- "Renders Progress & Grid Visuals" --> Player
+                System -- "Writes Synchronous Final Score" --> DB[(Vercel KV Cloud DB)]
+                System -- "Retrieves & Displays Global Leaderboard" --> Player
+        </div>
+    </div>
+
+    <h2>Level 1 DFD: Game Execution & Serverless Flow</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+            %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#f8fafc'}}}%%
+            flowchart TD
+                subgraph Client [User Browser - Frontend UI]
+                    UI_Auth(Auth View Component)
+                    UI_Game(Dynamic Game Board View)
+                    UI_LB(Leaderboard Dashboard View)
+                end
+
+                subgraph API [Vercel Serverless Functions]
+                    API_Mail[/api/send_email/]
+                    API_DB[/api/leaderboard/]
+                end
+
+                subgraph Storage [Persistent Storage Config]
+                    LocalDB[(Browser localStorage)]
+                    RedisDB[(Vercel KV Cloud Database)]
+                end
+
+                %% Authentication Event Logic
+                UI_Auth -- "1. Request OTP (Email, Name)" --> API_Mail
+                API_Mail -- "2. Dispatches HTML Email" --> User_Inbox((User Gmail Inbox))
+                UI_Auth -- "3. Verify 4-Digit Code" --> LocalDB
+                LocalDB -- "Creates Active Token Session" --> UI_Game
+
+                %% Core Gameplay Loop
+                UI_Game -- "Mathematically Generates Tiles" --> UI_Game
+                UI_Game -- "Captures & Logs Physical Failures" --> UI_Game
+
+                %% Cloud Synchronization / Endgame
+                UI_Game -- "4. Game Over Sync Hook" --> API_DB
+                API_DB -- "5. Algorithms Slice & Sort Array" --> RedisDB
+                
+                %% Leaderboard Construction
+                UI_LB -- "6. Requests Global Ranks via HTTP GET" --> API_DB
+                RedisDB -- "7. Returns JSON Blob Array limit" --> API_DB
+                API_DB -- "8. Parses Safely & Feeds to DOM" --> UI_LB
+        </div>
+    </div>
+
+    <script>
+        // Start Mermaid rendering optimally
+        mermaid.initialize({ startOnLoad: true, flowchart: { curve: 'basis' } });
+    </script>
+</body>
+</html>
