@@ -40,6 +40,27 @@
             margin-bottom: 20px;
             min-height: 40px;
         }
+        
+        .lb-tab {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .lb-tab:hover {
+            border-color: var(--primary);
+            background: rgba(30, 41, 59, 0.8);
+        }
+        .lb-tab.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -83,12 +104,13 @@
 
         <!-- HUB DASHBOARD CONTAINER -->
         <div id="hub-container" class="glass-panel wide-panel hidden">
-            <header class="game-header">
+            <header class="game-header" style="align-items: center;">
                 <div>
                     <h2 id="greeting-text">Welcome, Agent</h2>
                     <p style="color:var(--text-muted)">Select a simulation to begin cognitive training.</p>
                 </div>
                 <div class="btn-group">
+                    <button id="btn-hub-leaderboard" class="secondary-btn" style="border-color:#fbbf24; color:#fbbf24;">🏆 Global Rankings</button>
                     <button id="btn-logout" class="danger-btn">Sign Out</button>
                 </div>
             </header>
@@ -125,6 +147,42 @@
                     <p>Match complex icon pairs perfectly across dimensions.</p>
                     <button onclick="window.location.href='puzzle.html'" class="primary-btn glow-on-hover">Launch</button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- MASTER LEADERBOARD CONTAINER -->
+        <div id="master-leaderboard-container" class="glass-panel wide-panel hidden">
+            <header class="game-header">
+                <div>
+                    <h1 class="gradient-text">Global Network Rankings</h1>
+                    <p>Live datastream of top agents categorized by cognitive domain.</p>
+                </div>
+                <div class="btn-group">
+                    <button id="btn-lb-back-hub" class="danger-btn">Return to Hub</button>
+                </div>
+            </header>
+            
+            <div class="tabs-container" style="display:flex; gap:10px; margin-top:20px; margin-bottom:20px; flex-wrap:wrap; justify-content:center;">
+                <button class="lb-tab active" data-game="sequence">Sequence Pro</button>
+                <button class="lb-tab" data-game="number">Number Memory</button>
+                <button class="lb-tab" data-game="reaction">Reaction Speed</button>
+                <button class="lb-tab" data-game="puzzle">Visual Puzzle</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="master-leaderboard-table">
+                    <thead>
+                        <tr id="master-table-head">
+                            <th>Rank</th>
+                            <th>Player (Email)</th>
+                            <th>Levels</th>
+                            <th>Failures</th>
+                        </tr>
+                    </thead>
+                    <tbody id="master-leaderboard-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
