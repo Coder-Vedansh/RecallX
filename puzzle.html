@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecallX - Visual Puzzle</title>
+    <link rel="stylesheet" href="./style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .back-nav {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 15px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .back-nav:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        
+        #puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+            perspective: 1000px;
+        }
+
+        .puzzle-card {
+            width: 80px;
+            height: 80px;
+            background: #1e293b;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .puzzle-card.flipped {
+            transform: rotateY(180deg);
+            background: #cbd5e1; /* visible face background */
+            cursor: default;
+        }
+
+        .puzzle-card.matched {
+            transform: rotateY(180deg) scale(0.95);
+            background: var(--primary);
+            opacity: 0.8;
+            cursor: default;
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .card-inner {
+            transform: rotateY(180deg);
+            display: none;
+        }
+
+        .puzzle-card.flipped .card-inner, 
+        .puzzle-card.matched .card-inner {
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="blob shape-1"></div>
+    <div class="blob shape-2"></div>
+
+    <div id="app-root" class="fade-in">
+        <a href="index.html" class="back-nav">← Return to Hub</a>
+        
+        <!-- GAME BOARD CONTAINER -->
+        <div id="game-container" class="game-panel hidden" style="max-width: 600px;">
+            <header class="game-header">
+                <div>
+                    <h2 id="greeting-text">Loading...</h2>
+                    <p class="score-tracking">Moves Total: <span id="failure-count">0</span></p>
+                </div>
+                <h1 id="level-text" class="gradient-text">VISUAL PUZZLE</h1>
+                <div class="btn-group">
+                    <button id="btn-view-leaderboard" class="secondary-btn">Leaderboard</button>
+                    <button id="btn-restart" class="primary-btn">Restart</button>
+                </div>
+            </header>
+
+            <div class="game-status">
+                <h3 id="board-status" style="color:#94a3b8;">Match all the pairs. Lowest moves wins.</h3>
+            </div>
+
+            <!-- Puzzle Area -->
+            <div id="puzzle-grid">
+                <!-- Injected via JS -->
+            </div>
+            
+            <div id="win-area" class="hidden" style="text-align:center; margin-top:20px;">
+                <h2 style="color: #10b981; margin-bottom:15px;">System Mastered!</h2>
+                <button id="btn-submit-score" class="primary-btn glow-on-hover" style="font-size: 1.1rem; padding: 10px 30px;">Save Score to Global</button>
+            </div>
+
+        </div>
+
+        <!-- LEADERBOARD CONTAINER -->
+        <div id="leaderboard-container" class="glass-panel wide-panel hidden">
+            <h1 class="gradient-text">Puzzle Match Leaderboard</h1>
+            <p>Top agents ranked by extreme visual processing efficiency (Lowest moves to clear).</p>
+            
+            <div class="table-container">
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player (Email)</th>
+                            <th>Total Moves</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-group">
+                <button id="btn-lb-play" class="primary-btn glow-on-hover">Test Again</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="./puzzle.js"></script>
+</body>
+</html>
