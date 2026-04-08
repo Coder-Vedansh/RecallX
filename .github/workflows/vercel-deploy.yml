@@ -24,6 +24,12 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
+      - name: Install Application Dependencies
+        run: npm install
+
+      - name: Execute DevOps CI Test Suite
+        run: npm test
+
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
