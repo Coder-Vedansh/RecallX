@@ -3,9 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RecallX - Sequence Pro</title>
+    <title>RecallX - Gaming Hub</title>
     <link rel="stylesheet" href="./style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .game-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .game-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        .game-card h3 {
+            color: #f8fafc;
+            margin-bottom: 10px;
+        }
+        .game-card p {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 20px;
+            min-height: 40px;
+        }
+    </style>
 </head>
 <body>
 
@@ -18,8 +53,8 @@
         
         <!-- AUTHENTICATION CONTAINER -->
         <div id="auth-container" class="glass-panel">
-            <h1 class="gradient-text">RecallX PRO</h1>
-            <p id="auth-subtitle">Sequence Memory Game</p>
+            <h1 class="gradient-text">RecallX PORTAL</h1>
+            <p id="auth-subtitle">Enterprise Gaming Hub</p>
             
             <div id="login-view" class="auth-box">
                 <div class="input-group">
@@ -28,16 +63,16 @@
                 </div>
                 <div class="input-group">
                     <label>Email Address</label>
-                    <input type="email" id="player-email" placeholder="agent@recallx.com">
+                    <input type="email" id="player-email" placeholder="agent@recallx.com" autocomplete="off">
                 </div>
-                <button id="btn-send-otp" class="primary-btn glow-on-hover">Send OTP</button>
+                <button id="btn-send-otp" class="primary-btn glow-on-hover">Authenticate</button>
             </div>
 
             <div id="otp-view" class="auth-box hidden">
                 <p id="otp-desc" style="color:var(--text-main); font-weight:600; font-size:0.9rem; margin-bottom:15px;"></p>
                 <div class="input-group">
                     <label>Secure OTP</label>
-                    <input type="text" id="player-otp" placeholder="4-digit Verification Code">
+                    <input type="text" id="player-otp" placeholder="4-digit Verification Code" autocomplete="off">
                 </div>
                 <div class="btn-group">
                     <button id="btn-verify-otp" class="primary-btn glow-on-hover">Verify</button>
@@ -46,56 +81,42 @@
             </div>
         </div>
 
-        <!-- GAME BOARD CONTAINER -->
-        <div id="game-container" class="game-panel hidden">
+        <!-- HUB DASHBOARD CONTAINER -->
+        <div id="hub-container" class="glass-panel wide-panel hidden">
             <header class="game-header">
                 <div>
-                    <h2 id="greeting-text">Loading...</h2>
-                    <p class="score-tracking">Failures this run: <span id="failure-count">0</span></p>
+                    <h2 id="greeting-text">Welcome, Agent</h2>
+                    <p style="color:var(--text-muted)">Select a simulation to begin cognitive training.</p>
                 </div>
-                <h1 id="level-text" class="gradient-text">LEVEL 1</h1>
                 <div class="btn-group">
-                    <button id="btn-view-leaderboard" class="secondary-btn">Leaderboard</button>
-                    <button id="btn-logout" class="danger-btn">Logout</button>
+                    <button id="btn-logout" class="danger-btn">Sign Out</button>
                 </div>
             </header>
 
-            <div class="game-status">
-                <h3 id="board-status">Initializing System...</h3>
-                <div class="progress-bar-container">
-                    <div id="progress-bar"></div>
+            <div class="hub-grid">
+                <!-- GAME 1 -->
+                <div class="game-card">
+                    <div class="game-icon">🟩</div>
+                    <h3>Sequence Pro</h3>
+                    <p>Memorize the spatial pattern of tiles increasing in complexity.</p>
+                    <button onclick="window.location.href='sequence.html'" class="primary-btn glow-on-hover">Launch</button>
                 </div>
-            </div>
 
-            <div id="grid-board">
-                <!-- Tiles injected via JS -->
-            </div>
-        </div>
-
-        <!-- LEADERBOARD CONTAINER -->
-        <div id="leaderboard-container" class="glass-panel wide-panel hidden">
-            <h1 class="gradient-text">Global Leaderboard</h1>
-            <p>Top RecallX Players based on zero-fault memory sequencing.</p>
-            
-            <div class="table-container">
-                <table id="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Player (Email)</th>
-                            <th>Levels Beaten</th>
-                            <th>Failures (Attempts)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="btn-group">
-                <button id="btn-lb-play" class="primary-btn glow-on-hover">Play Again</button>
-                <button id="btn-lb-logout" class="danger-btn">Sign Out</button>
+                <!-- GAME 2 -->
+                <div class="game-card">
+                    <div class="game-icon">🔢</div>
+                    <h3>Number Memory</h3>
+                    <p>Remember the longest string of raw digits flashing on screen.</p>
+                    <button onclick="window.location.href='number.html'" class="primary-btn glow-on-hover">Launch</button>
+                </div>
+                
+                <!-- GAME 3 -->
+                <div class="game-card" style="opacity: 0.6">
+                    <div class="game-icon">⚡</div>
+                    <h3>Reaction Speed</h3>
+                    <p>Test your neurological physical response times.</p>
+                    <button class="secondary-btn" disabled>Coming Soon</button>
+                </div>
             </div>
         </div>
 
@@ -110,6 +131,6 @@
         </div>
     </div>
 
-    <script src="./script.js"></script>
+    <script src="./hub.js"></script>
 </body>
 </html>

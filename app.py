@@ -11,10 +11,11 @@ DB_FILE = 'local_database.db'
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    # Create the modern Leaderboard table
+    # Create the modern Multi-Game Leaderboard table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS leaderboard (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            game_type TEXT NOT NULL,
             email TEXT NOT NULL,
             name TEXT NOT NULL,
             levels_beaten INTEGER NOT NULL,
@@ -27,17 +28,12 @@ def init_db():
 
 @app.route('/')
 def home():
-    # Serve the main index file from root directory
+    # Serve the main Portal Hub
     return app.send_static_file('index.html')
 
 @app.route('/api/send_email', methods=['POST'])
 def send_email():
-    """
-    Local College Simulator Endpoint:
-    Since we are not physically pushing to Cloud NodeMailer SMTP arrays,
-    returning success: False seamlessly shifts the Frontend UI into 'Simulated Mode',
-    physically rendering the Email payload safely on the UI screen for Academic Testing.
-    """
+    """ Local Simulator Endpoint """
     return jsonify({
         "success": False, 
         "error": "Local Development: Simulating Email Inbox visually."
@@ -50,13 +46,15 @@ def handle_leaderboard():
     
     if request.method == 'GET':
         try:
-            # Query the database sorting strictly by Highest Level, then Fewest Failures
+            game_type = request.args.get('game', 'sequence')
+            
             cursor.execute('''
                 SELECT email, name, levels_beaten, failures 
                 FROM leaderboard 
+                WHERE game_type = ?
                 ORDER BY levels_beaten DESC, failures ASC 
                 LIMIT 15
-            ''')
+            ''', (game_type,))
             rows = cursor.fetchall()
             
             leaderboard_data = []
@@ -77,6 +75,7 @@ def handle_leaderboard():
     if request.method == 'POST':
         try:
             data = request.json
+            game_type = data.get('gameType', 'sequence')
             email = data.get('email')
             name = data.get('name')
             levels = int(data.get('levelsBeaten', 0))
@@ -84,9 +83,9 @@ def handle_leaderboard():
             timestamp = datetime.datetime.now().isoformat()
             
             cursor.execute('''
-                INSERT INTO leaderboard (email, name, levels_beaten, failures, timestamp)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (email, name, levels, fails, timestamp))
+                INSERT INTO leaderboard (game_type, email, name, levels_beaten, failures, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (game_type, email, name, levels, fails, timestamp))
             
             conn.commit()
             return jsonify({"success": True, "message": "Saved to Local SQLite DB"})
@@ -100,7 +99,7 @@ if __name__ == '__main__':
     port = 3000
     
     print("\n" + "="*50)
-    print("🚀 INIT: RECALLX LOCAL SQLITE EXECUTING")
+    print("🚀 INIT: RECALLX PORTAL LOCAL SERVER EXECUTING")
     print("Database bound to: local_database.db")
     print("="*50 + "\n")
     
