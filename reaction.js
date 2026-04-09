@@ -131,6 +131,19 @@ reactionPad.addEventListener('mousedown', () => {
         
         resultMs.innerText = `${reactionTime} ms`;
         resultArea.classList.remove('hidden');
+    } else if (gameState === 'RESULT') {
+        resultArea.classList.add('hidden');
+        gameState = 'WAIT';
+        reactionPad.className = 'pad-wait';
+        reactionPadText.innerText = "Wait for green...";
+        
+        const randomWait = Math.floor(Math.random() * 3500) + 1500;
+        timeoutId = setTimeout(() => {
+            gameState = 'GO';
+            reactionPad.className = 'pad-go';
+            reactionPadText.innerText = "CLICK!";
+            startTime = Date.now();
+        }, randomWait);
     }
 });
 
